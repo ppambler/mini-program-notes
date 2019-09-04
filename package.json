@@ -1,0 +1,19 @@
+{
+  "name": "mini-program",
+  "version": "1.0.0",
+  "description": "小程序学习笔记",
+  "scripts": {
+    "docs:dev": "vuepress dev docs",
+    "docs:build": "vuepress build docs"
+  },
+  "main": "index.js",
+  "author": "Ambler",
+  "license": "MIT",
+  "repository": "git@github.com:ppambler/mini-program.git",
+  "devDependencies": {
+    "vuepress": "^1.0.3"
+  },
+  "dependencies": {
+    "markdown-it-task-checkbox": "^1.0.6"
+  }
+}
