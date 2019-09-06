@@ -1,5 +1,5 @@
 ---
-title: 小程序 云开发基础知识
+title: 02-小程序·云开发基础知识
 typora-copy-images-to: img\02
 ---
 
@@ -73,7 +73,7 @@ wx.cloud.init({
 
 :::
 
-![1567654561621](img/02/1567654561621.png)
+![1567654561621](./img/02/1567654561621.png)
 
 > 数组中的一个元素，似乎就是叫做一个文档行，而不是把「文档」和「行」拆开来看，不过，叫「行」也没事，反正联想到关系型数据库里边的表的行，都表示一个东西，都是一条记录！
 
@@ -127,7 +127,7 @@ db.collection('集合名称').where({
 
 以下指令挂载在 `db.command`旗下：
 
-![1567657186157](img/02/1567657186157.png)
+![1567657186157](./img/02/1567657186157.png)
 
 > 举例说明：在 `diary` 集合中找出 `openid` 某个值并且创建时间（`tsModified`）在 `start` 和 `end` 之间的文档。
 
@@ -215,7 +215,7 @@ wx.cloud.getTempFileURL
 wx.cloud.removeFile
 ```
 
-![1567660732376](img/02/1567660732376.png)
+![1567660732376](./img/02/1567660732376.png)
 
 也能权限设置吗？
 
@@ -398,7 +398,7 @@ exports.main = async (event = {}) => {
 
 经过使用 Chrome 查看器查看，发现最新文章都包含在一个 `class` 为 `card-group-list` 的 div 下，
 
-![1567677141966](img/02/1567677141966.png)
+![1567677141966](./img/02/1567677141966.png)
 
 然后找到 `zm-card-title` 等每个文章的标题、图片和商城信息，将结果放到一个数组，最后 `resolve` 输出：
 
@@ -449,7 +449,7 @@ wx.cloud.callFunction({
 
 结果：
 
-![1567677606996](img/02/1567677606996.png)
+![1567677606996](./img/02/1567677606996.png)
 
 ::: warning
 
@@ -461,9 +461,144 @@ wx.cloud.callFunction({
 
 #### 云函数的调试
 
+为什么要讲这个？
+
+> 因为云函数有一个很不方便的地方，就是测试起来相对来说比较麻烦，我们**不能每次都上传到云端，通过 `wx.cloud.callFunction` 的方式进行调用**，下面介绍几种测试的方法。
+
+**①线下：函数自己使用 Node 来测试**
+
+这种方法就是在 index.js 的最后，增加一个测试方法，比如：
+
+```js
+const request = require('request')
+const cheerio = require('cheerio')
+const main = (exports.main = async (event = {}) => {
+  let category = event.category || 'diannaoshuma'
+  return new Promise((resolve, reject) => {
+    request.get(`https://m.smzdm.com/fenlei/${category}/`, (e, req, body) => {
+      if (!e && req.statusCode === 200) {
+        const $ = cheerio.load(body)
+        const result = []
+        $('.card-group-list').each((i, v) => {
+          let $v = $(v)
+          let title = $v.find('.zm-card-title').text().trim()
+          let image = $v.find('.zm-card-media img').attr('src')
+          let label = $v.find('.card-label').text().trim()
+          let mall = $v.find('.card-mall').text().trim()
+          result.push({
+            title,
+            image,
+            label,
+            mall
+          })
+        })
+        resolve(result)
+      }
+    })
+  })
+})
+main({category: 'diannaoshuma'}).then(r=>{console.log(r)})
+```
+
+然后使用 Node.js 直接运行该文件：`node index.js`
+
+::: tip
+
+再次提示使用 Run Code 让代码单独跑起来，而不是打开控制台 输入`node index.js`
+
+:::
+
+**②线上：使用开发者工具**
+
+在小程序开发者工具的云开发控制台内有测试的工具，进入路径为：「云开发 -> 云函数列表 -> 点击具体云函数 -> 右上角测试」。
+
+对于测试的参数，还可以保存下来模板，方便以后使用。
+
+![1567730251686](./img/02/1567730251686.png)
+
+#### 云函数的 mock server
+
+上边提到的测试方法，都是**将小程序的研发流程完全割裂开来**，**不能完整地测试小程序的代码**，只能要么测试云函数要么测试小程序，那么测试小程序的代码就需要上线云函数，实际还是一种效率不高的做法。这里小册作者介绍一种本地 **mock server** 的方式来开启云函数的测试，这种方式可以**打通小程序开发的整个流程**。具体做法分两步：
+
+1. 将云函数作为一个**接受请求参数**的 **server** 来访问
+2. 使用 `wx.request` 构造请求拿到云函数的处理结果，然后跑通整个研发流程
+
+在 mock server 选型上，选择使用 [Express](https://link.juejin.im/?target=https%3A%2F%2Fwww.expressjs.com%2F) 自建 mock server 的方式。
+
+①在`dist/`下，`yarn init`一下，不然 `express`的安装就会在 `weui-wxss`目录的 `node_modules`里边
+
+②安装`express`，`yarn add express`
+
+③启动一个 Express server
+
+```
+const express = require('express')
+const app = express()
+
+app.listen(3000, () => {
+  console.log(`开发服务器启动成功：http://127.0.0.1:3000`)
+})
+```
+
+④将云函数引入进程序中来，作**为一个路由 handler 来接受http url 的参数**，处理请求之后，将返回的处理结果通过 Express 的 `res.json`输出。
+
+```js
+const express = require('express')
+const app = express()
+const port = 3000
 
 
+app.get('/', (req, res) => res.send('Hello World!'))
 
+const add = require('./functions/add/').main
+const smzdm = require('./functions/smzdm/').main
+
+app.get(`/api/add`, (req, res, next) => {
+  // 将 req.query 传入
+  add(req.query).then(res.json.bind(res)).catch((e) => {
+    console.error(e)
+    next(e)
+  })
+  // next()
+})
+app.get(`/api/smzdm`, (req, res, next) => {
+  // 将 req.query 传入
+  smzdm(req.query).then(res.json.bind(res)).catch((e) => {
+    console.error(e)
+    next(e)
+  })
+  // next()
+})
+
+app.listen(port, () => console.log(`开发服务器启动成功：http://127.0.0.1:${port}`))
+```
+
+⑤测试：
+
+```
+http://127.0.0.1:3000/api/add?a=1&b=2
+http://127.0.0.1:3000/api/smzdm?category=diannaoshuma
+```
+
+::: tip
+
+格式化返回的json数据可以安装这个：
+
+**➹：**[JSON Formatter - Chrome 网上应用店](https://chrome.google.com/webstore/detail/json-formatter/bcjindcccaagfpapjjmafapmmgkkhgoa?hl=zh-CN)
+
+当然，本地的，你也可以安装 「[HiJson](https://github.com/nblookup/HiJson)」，不过你得安装 JDK
+
+:::
+
+至此  mock server 搭建完毕了
+
+关于小程序代码中如何调用，怎么保持代码的一致性，自由切换线上代码和线下开发代码的方式，在[实战篇 1：小程序开发环境搭建](https://juejin.im/book/5b70f101e51d456669381803/section/5b70f587518825612b15bd95)中会有更详细的讲解。
+
+## ★小结
+
+本节重点介绍了腾讯新推出的**小程序云开发的基础知识**，云开发由 NoSQL 数据库、文件存储和云函数三个云产品组成，其中数据库和文件存储都可以单独设置用户权限，这样**极大地降低了 UGC（用户产生内容）类小程序的开发门槛**。
+
+**云函数是小程序·云开发中一个很重要的产品**，本节介绍了**云函数的基本用法和注意事项**，同时针对小程序云函数的开发测试比较困难的情况，提出了 **mock server** 的解决方式
 
 ## ★Q&A
 
@@ -644,3 +779,46 @@ request('http://www.google.com', function (error, response, body) {
 
 **➹：**[Request —— 让 Node.js http请求变得超简单 - 江小湖のBlog - SegmentFault 思否](https://segmentfault.com/a/1190000000385867#articleHeader1)
 
+### ⑦关闭3000端口占用？
+
+```bash
+# 拿到占用3000端口进程的PID
+netstat -ano|findstr 3000
+
+# 强制关闭PID为18124的进程
+taskkill  -F -PID 18124
+```
+
+**➹：**[windows10下关闭端口占用 - tianjun2012的专栏 - CSDN博客](https://blog.csdn.net/tianjun2012/article/details/79806760)
+
+### ⑧如何删除依赖包？
+
+```bash
+yarn remove [package]
+```
+
+这会更新`package.json`和`yarn.lock` 文件
+
+**➹：**[管理依赖项 | Yarn](https://yarnpkg.com/lang/zh-hans/docs/managing-dependencies/)
+
+### ⑨req res next 在express框架里分别是什么意思？
+
+1. req :  request的缩写， 请求的数据。**Request 对象**表示 HTTP 请求，包含了请求查询字符串，参数，内容，HTTP 头部等属性。
+2. res:   response的缩写， 响应的数据。**Response 对象**表示 HTTP 响应，即在接收到请求时向客户端发送的 HTTP 响应数据
+3. **next** 则是前往下一个中间件，执行相同路径的下一个方法。
+
+**➹：**[req res next 在express框架里分别是什么意思？ - 简书](https://www.jianshu.com/p/698de50dcc93)
+
+**➹：**[对express中next函数的一些理解 - CNode技术社区](https://cnodejs.org/topic/5757e80a8316c7cb1ad35bab)
+
+### ⑩重构 mock server？（undo）
+
+我不想写那么多路由呀！毕竟这些路由的逻辑是一样的，能不能批量注册路由呢？
+
+**➹：**[关于 express 路由管理的几种自动化方法 - KainStar的专栏 - SegmentFault 思否](https://segmentfault.com/a/1190000013308591)
+
+**➹：**[使用 Node.js 写一个代码生成器 - 掘金](https://juejin.im/post/5cd45480e51d453a572aa2cf)
+
+**➹：**[Express 实战（五）：路由 - 掘金](https://juejin.im/post/59bce4c45188257e8b36a0f3)
+
+**➹：**[(★你是如何构建 Web 前端 Mock Server 的？ - 知乎](https://www.zhihu.com/question/35436669)

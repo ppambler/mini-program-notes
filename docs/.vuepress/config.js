@@ -21,8 +21,14 @@ module.exports = {
         collapsable: true, // 可选的, 默认值是 true,
         sidebarDepth: 2,    // 可选的, 默认值是 1
         children: [
-          '/01-weather-mp/01-one',
-          '/01-weather-mp/02-two',
+          {
+            title: '基础篇',
+            sidebarDepth: 2,
+            children: [
+              '/01-weather-mp/01-weather-one',
+              '/01-weather-mp/02-weather-two',
+            ]
+          }
         ]
       }
     ],
