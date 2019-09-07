@@ -27,6 +27,14 @@ module.exports = {
             children: [
               '/01-weather-mp/01-weather-one',
               '/01-weather-mp/02-weather-two',
+              '/01-weather-mp/03-weather-three',
+            ]
+          },
+          {
+            title: '实战篇',
+            sidebarDepth: 2,
+            children: [
+              '/01-weather-mp/04-weather-four',
             ]
           }
         ]
