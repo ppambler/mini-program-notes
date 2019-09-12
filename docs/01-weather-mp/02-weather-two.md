@@ -531,7 +531,7 @@ main({category: 'diannaoshuma'}).then(r=>{console.log(r)})
 
 ③启动一个 Express server
 
-```
+```js
 const express = require('express')
 const app = express()
 

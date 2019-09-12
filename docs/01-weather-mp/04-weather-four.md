@@ -11,6 +11,13 @@ typora-copy-images-to: img\04
 >
 > 我们本地开发主要关注的是 `client`目录，而`dist`目录则是作为项目导入到微信开发者工具里边的！
 
+## ★技术选型
+
+- VS Code： 编辑器，用于代码编写
+- Gulp：前端项目构建工具
+- Sass：小程序样式表
+- ES6：采用 ES6 语法编写 JS 代码，Babel 做编译处理
+
 ## ★添加 gulp task
 
 > 开发配置
@@ -386,18 +393,46 @@ json文件里边不存在注释
 
 > 这简直就是gulp的watch哈！
 
+### ◇添加 cloud task
+
+```js
+// cloud-functions 处理方法
+const cloudPath = './server/cloud-functions'
+function cloud() {
+  return src(`${cloudPath}/**`).pipe(dest(`${dist}/cloud-functions`))
+}
+
+// 云函数有文件变动，那就重新拷贝一份到dist目录的cloud-functions里边去
+async function watchCloud() {
+  gulp.watch(`${cloudPath}/**`, cloud)
+}
+
+exports.devCloud = series(cloud, watchCloud)
+```
+
+
+
 ## ★前端对云函数的调用
 
+**为什么需要？**
 
+> mock server 中的云函数实现了一套代码在本地和线上都可以跑通，但是 `client` 中页面引用云函数使用 `wx.cloud.callFunction` 却不能实现一套代码通用
+
+为解决这个问题，小册作者通过 `jdists` 的 `remove` 和 `trigger` 方式来实现差异化管理
+
+不过，我就没搞了！因为就只需要写几个云函数而已！
 
 ## ★总结
 
 - 关于gulp的配置，需要配置开发环境和生产环境，配置环境的关键在于，你得知道你的开发目录下有哪些类型的文件，而根据不同类型的文件，需要做出怎样的处理，我直接看得是小册作者做的处理，毕竟我也没有接触过，之前都是用webpack直接搞，然后打包就直接上线了。
 - 这小程序用的都是开发依赖啊！
-
-
-
-
+- 搞项目时要运行一些脚本呢：
+  - 如果`dist`目录啥内容都咩有，那就 `yarn dev`
+  - 如果`dist`目录已经有内容了，那就 `yarn start`；
+  - 如果你要处理云文件，那就 `yarn cloud`；
+  - 如果你要本地测试云函数，那就 `yarn server`
+  - 如果你要打包上线，那就 `yarn build`
+- 关于本地测试云函数，官方提供了一个工具 [SCF-Cli](https://github.com/TencentCloud/scf-node-debug)。至此，云函数的修改就不需要每次都上传到云端之后再测试了，可以提高研发效率。
 
 ## ★Q&A
 
@@ -623,7 +658,7 @@ log.error('oh no!');
 // [16:27:02] oh no!
 ```
 
-
+**➹：**[常用gulp插件介绍(一) | 进击的马斯特](http://pinkyjie.com/2015/08/02/commonly-used-gulp-plugins-part-1/#comments)
 
 ### ⑫关于promise的then的参数不是函数？
 
