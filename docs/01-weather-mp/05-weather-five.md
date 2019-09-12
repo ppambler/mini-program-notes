@@ -1,0 +1,35 @@
+---
+title: 遇到的问题
+typora-copy-images-to: img\05
+---
+
+# 遇到的问题
+
+> 小册后面的内容很干呀！
+
+## ★常识性问题
+
+### 1、为啥不用vw、vh呢？
+
+因为在小程序里边规定单位是rpx，而且还规定了屏幕宽为750rpx，即750个物理像素，你在PC上写一个 10px border，那就代表着这是10个物理像素，而在小程序环境里边呢？你要看到在PC上表示10px的效果，那么你得写20rpx。
+
+当然，小程序里边还能用百分比单位。
+
+那么 vw、vh能用吗？——也是能用的，不过，一般情况下，`rpx+百分比`就可以做到布局适配了！
+
+题外话，我要搞移动端页面的话，那么我就要这样调试：
+
+![1568310939152](img/05/1568310939152.png)
+
+**➹：**[WXSS | 微信开放文档](https://developers.weixin.qq.com/miniprogram/dev/framework/view/wxss.html#%E5%B0%BA%E5%AF%B8%E5%8D%95%E4%BD%8D)
+
+**➹：**[微信小程序填坑之路（三）：布局适配方案（rpx、px、vw、vh） - 李益 - CSDN博客](https://blog.csdn.net/liyi1009365545/article/details/78542707)
+
+
+
+
+
+
+
+
+
