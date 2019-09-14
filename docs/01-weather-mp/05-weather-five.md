@@ -21,6 +21,8 @@ typora-copy-images-to: img\05
 
 ![1568310939152](img/05/1568310939152.png)
 
+> 眼睛距离手机屏幕和电脑屏幕的距离是不同的，比如手机大概就是20cm，而电脑知识60~80cm左右吧！因此，大屏幕远距离看是很清晰的，而小屏幕看远距离看就模糊不堪了。
+
 **➹：**[WXSS | 微信开放文档](https://developers.weixin.qq.com/miniprogram/dev/framework/view/wxss.html#%E5%B0%BA%E5%AF%B8%E5%8D%95%E4%BD%8D)
 
 **➹：**[微信小程序填坑之路（三）：布局适配方案（rpx、px、vw、vh） - 李益 - CSDN博客](https://blog.csdn.net/liyi1009365545/article/details/78542707)
